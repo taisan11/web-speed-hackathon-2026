@@ -3,6 +3,7 @@ import { MouseEvent, useCallback, useId } from "react";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
+import { runDialogCommand } from "@web-speed-hackathon-2026/client/src/utils/dialog";
 
 interface Props {
   alt: string;
@@ -35,6 +36,7 @@ export const CoveredImage = ({ alt, src }: Props) => {
         type="button"
         command="show-modal"
         commandfor={dialogId}
+        onClick={() => runDialogCommand("show-modal", dialogId)}
       >
         ALT を表示する
       </button>

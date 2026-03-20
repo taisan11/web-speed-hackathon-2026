@@ -3,6 +3,8 @@ import { Helmet, HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
+import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
+import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 const TimelineContainer = lazy(async () => ({
@@ -50,16 +52,6 @@ const CrokContainer = lazy(async () => ({
 const NotFoundContainer = lazy(async () => ({
   default: (await import("@web-speed-hackathon-2026/client/src/containers/NotFoundContainer"))
     .NotFoundContainer,
-}));
-
-const AuthModalContainer = lazy(async () => ({
-  default: (await import("@web-speed-hackathon-2026/client/src/containers/AuthModalContainer"))
-    .AuthModalContainer,
-}));
-
-const NewPostModalContainer = lazy(async () => ({
-  default: (await import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer"))
-    .NewPostModalContainer,
 }));
 
 export const AppContainer = () => {

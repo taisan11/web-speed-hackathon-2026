@@ -6,7 +6,6 @@ import path from 'path';
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  root: './src',
   plugins: [
     react(),
     // unstableRolldownAdapter(analyzer()),

@@ -1,4 +1,5 @@
 import path from "node:path";
+import { existsSync } from "node:fs";
 
 import { Hono } from "hono";
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -12,10 +13,12 @@ import {
 export const staticRouter = new Hono();
 
 // Serve uploads
-staticRouter.use(serveStatic({
-  root: UPLOAD_PATH,
-  rewriteRequestPath: (path) => path,
-}));
+if (existsSync(UPLOAD_PATH)) {
+  staticRouter.use(serveStatic({
+    root: UPLOAD_PATH,
+    rewriteRequestPath: (path) => path,
+  }));
+}
 
 // Serve public
 staticRouter.use(serveStatic({
@@ -24,20 +27,22 @@ staticRouter.use(serveStatic({
 }));
 
 // Serve client dist with SPA fallback
-staticRouter.use(serveStatic({
-  root: CLIENT_DIST_PATH,
-  rewriteRequestPath: (requestPath) => requestPath,
-}));
+if (existsSync(CLIENT_DIST_PATH)) {
+  staticRouter.use(serveStatic({
+    root: CLIENT_DIST_PATH,
+    rewriteRequestPath: (requestPath) => requestPath,
+  }));
 
-const serveClientIndex = serveStatic({
-  root: CLIENT_DIST_PATH,
-  path: "/index.html",
-});
+  const serveClientIndex = serveStatic({
+    root: CLIENT_DIST_PATH,
+    path: "/index.html",
+  });
 
-staticRouter.get("*", async (c, next) => {
-  if (path.extname(c.req.path) !== "") {
-    return c.notFound();
-  }
+  staticRouter.get("*", async (c, next) => {
+    if (path.extname(c.req.path) !== "") {
+      return c.notFound();
+    }
 
-  return serveClientIndex(c, next);
-});
+    return serveClientIndex(c, next);
+  });
+}

@@ -1,6 +1,8 @@
 import classNames from "classnames";
 import { ComponentPropsWithRef, ReactNode } from "react";
 
+import { runDialogCommand } from "@web-speed-hackathon-2026/client/src/utils/dialog";
+
 interface Props extends ComponentPropsWithRef<"button"> {
   variant?: "primary" | "secondary";
   leftItem?: ReactNode;
@@ -13,6 +15,9 @@ export const Button = ({
   rightItem,
   className,
   children,
+  onClick,
+  command,
+  commandfor,
   ...props
 }: Props) => {
   return (
@@ -29,6 +34,14 @@ export const Button = ({
         className,
       )}
       type="button"
+      command={command}
+      commandfor={commandfor}
+      onClick={(ev) => {
+        onClick?.(ev);
+        if (!ev.defaultPrevented) {
+          runDialogCommand(command, commandfor);
+        }
+      }}
       {...props}
     >
       {leftItem}

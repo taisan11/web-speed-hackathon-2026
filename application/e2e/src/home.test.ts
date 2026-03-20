@@ -27,13 +27,13 @@ test.describe("ホーム", () => {
   });
 
   test("動画が自動再生される", async ({ page }) => {
-    const video = page.locator("article video").first();
-    await expect(video).toBeVisible({ timeout: 30_000 });
+    const canvas = page.locator("article canvas").first();
+    await expect(canvas).toBeVisible({ timeout: 30_000 });
 
-    const isReady = await video.evaluate((el: HTMLVideoElement) => {
-      return el.readyState >= 1;
+    const hasContent = await canvas.evaluate((el: HTMLCanvasElement) => {
+      return el.width > 0 && el.height > 0;
     });
-    expect(isReady).toBe(true);
+    expect(hasContent).toBe(true);
   });
 
   test("音声の波形が表示される", async ({ page }) => {

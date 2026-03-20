@@ -2,6 +2,7 @@ import classNames from "classnames";
 import { useLocation } from "react-router";
 
 import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation/Link";
+import { runDialogCommand } from "@web-speed-hackathon-2026/client/src/utils/dialog";
 
 interface Props {
   badge?: React.ReactNode;
@@ -37,6 +38,7 @@ export const NavigationItem = ({ badge, href, icon, command, commandfor, text }:
           type="button"
           command={command}
           commandfor={commandfor}
+          onClick={() => runDialogCommand(command, commandfor)}
         >
           <span className="relative text-xl lg:pr-2 lg:text-3xl">
             {icon}
