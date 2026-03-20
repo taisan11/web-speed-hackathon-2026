@@ -187,6 +187,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.14.0
         version: 1.19.11(hono@4.12.8)
+      '@web-speed-hackathon-2026/server':
+        specifier: workspace:*
+        version: 'link:'
       bcrypt:
         specifier: 6.0.0
         version: 6.0.0
