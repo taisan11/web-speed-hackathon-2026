@@ -33,7 +33,7 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
     text: "",
   });
 
-  const [hasFileError, setHasFileError] = useState(false);
+  const [fileErrorMessage, setFileErrorMessage] = useState<string | null>(null);
   const [isConverting, setIsConverting] = useState(false);
 
   const handleChangeText = useCallback<ChangeEventHandler<HTMLTextAreaElement>>((ev) => {
@@ -48,7 +48,7 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
     const files = Array.from(ev.currentTarget.files ?? []).slice(0, 4);
     const isValid = files.every((file) => file.size <= MAX_UPLOAD_BYTES_LIMIT);
 
-    setHasFileError(isValid !== true);
+    setFileErrorMessage(isValid ? null : "10 MB より小さくしてください");
     if (isValid) {
       setIsConverting(true);
 
@@ -69,7 +69,11 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
 
           setIsConverting(false);
         })
-        .catch(console.error);
+        .catch((error: unknown) => {
+          console.error(error);
+          setIsConverting(false);
+          setFileErrorMessage("画像の変換に失敗しました");
+        });
     }
   }, []);
 
@@ -77,20 +81,26 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
     const file = Array.from(ev.currentTarget.files ?? [])[0]!;
     const isValid = file.size <= MAX_UPLOAD_BYTES_LIMIT;
 
-    setHasFileError(isValid !== true);
+    setFileErrorMessage(isValid ? null : "10 MB より小さくしてください");
     if (isValid) {
       setIsConverting(true);
 
-      convertSound(file, { extension: "mp3" }).then((converted) => {
-        setParams((params) => ({
-          ...params,
-          images: [],
-          movie: undefined,
-          sound: new File([converted], "converted.mp3", { type: "audio/mpeg" }),
-        }));
+      convertSound(file, { extension: "mp3" })
+        .then((converted) => {
+          setParams((params) => ({
+            ...params,
+            images: [],
+            movie: undefined,
+            sound: new File([converted], "converted.mp3", { type: "audio/mpeg" }),
+          }));
 
-        setIsConverting(false);
-      });
+          setIsConverting(false);
+        })
+        .catch((error: unknown) => {
+          console.error(error);
+          setIsConverting(false);
+          setFileErrorMessage("音声の変換に失敗しました");
+        });
     }
   }, []);
 
@@ -98,7 +108,7 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
     const file = Array.from(ev.currentTarget.files ?? [])[0]!;
     const isValid = file.size <= MAX_UPLOAD_BYTES_LIMIT;
 
-    setHasFileError(isValid !== true);
+    setFileErrorMessage(isValid ? null : "10 MB より小さくしてください");
     if (isValid) {
       setParams((params) => ({
         ...params,
@@ -163,7 +173,7 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
       </ModalSubmitButton>
 
       <ModalErrorMessage>
-        {hasFileError ? "10 MB より小さくしてください" : hasError ? "投稿ができませんでした" : null}
+        {fileErrorMessage ?? (hasError ? "投稿ができませんでした" : null)}
       </ModalErrorMessage>
     </form>
   );

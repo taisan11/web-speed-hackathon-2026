@@ -9,6 +9,7 @@ import {
 } from "redux-form";
 
 import { Timeline } from "@web-speed-hackathon-2026/client/src/components/timeline/Timeline";
+import { useDebounce } from "@web-speed-hackathon-2026/client/src/hooks/use_debounce";
 import {
   parseSearchQuery,
   sanitizeSearchText,
@@ -55,16 +56,17 @@ const SearchPageComponent = ({
   const navigate = useNavigate();
   const [isNegative, setIsNegative] = useState(false);
 
-  const parsed = parseSearchQuery(query);
+  const parsed = useMemo(() => parseSearchQuery(query), [query]);
+  const debouncedKeywords = useDebounce(parsed.keywords, 300);
 
   useEffect(() => {
-    if (!parsed.keywords) {
+    if (!debouncedKeywords) {
       setIsNegative(false);
       return;
     }
 
     let isMounted = true;
-    analyzeSentiment(parsed.keywords)
+    analyzeSentiment(debouncedKeywords)
       .then((result) => {
         if (isMounted) {
           setIsNegative(result.label === "negative");
@@ -79,7 +81,7 @@ const SearchPageComponent = ({
     return () => {
       isMounted = false;
     };
-  }, [parsed.keywords]);
+  }, [debouncedKeywords]);
 
   const searchConditionText = useMemo(() => {
     const parts: string[] = [];
@@ -93,7 +95,7 @@ const SearchPageComponent = ({
       parts.push(`${parsed.untilDate} 以前`);
     }
     return parts.join(" ");
-  }, [parsed]);
+  }, [parsed.keywords, parsed.sinceDate, parsed.untilDate]);
 
   const onSubmit = (values: SearchFormData) => {
     const sanitizedText = sanitizeSearchText((values.searchText ?? "").trim());
