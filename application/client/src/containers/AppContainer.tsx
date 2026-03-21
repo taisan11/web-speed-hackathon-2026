@@ -1,11 +1,12 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useState } from "react";
 import { HelmetProvider } from "react-helmet";
-import { Route, Routes, useLocation, useNavigate } from "react-router";
+import { useLocation } from "wouter";
+import { Route, Switch } from "wouter";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
-import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import { fetchJSON, sendPOST } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 const TimelineContainer = lazy(async () => ({
   default: (await import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer"))
@@ -62,8 +63,7 @@ const RouteLoadingFallback = () => (
 );
 
 export const AppContainer = () => {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
+  const [pathname, navigate] = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -79,7 +79,7 @@ export const AppContainer = () => {
       });
   }, [setActiveUser]);
   const handleLogout = useCallback(async () => {
-    await sendJSON("/api/v1/signout", {});
+    await sendPOST("/api/v1/signout");
     setActiveUser(null);
     navigate("/");
   }, [navigate]);
@@ -96,28 +96,23 @@ export const AppContainer = () => {
         onLogout={handleLogout}
       >
         <Suspense fallback={<RouteLoadingFallback />}>
-          <Routes>
-            <Route element={<TimelineContainer />} path="/" />
-            <Route
-              element={
-                <DirectMessageListContainer activeUser={activeUser} authModalId={authModalId} />
-              }
-              path="/dm"
-            />
-            <Route
-              element={<DirectMessageContainer activeUser={activeUser} authModalId={authModalId} />}
-              path="/dm/:conversationId"
-            />
-            <Route element={<SearchContainer />} path="/search" />
-            <Route element={<UserProfileContainer />} path="/users/:username" />
-            <Route element={<PostContainer />} path="/posts/:postId" />
-            <Route element={<TermContainer />} path="/terms" />
-            <Route
-              element={<CrokContainer activeUser={activeUser} authModalId={authModalId} />}
-              path="/crok"
-            />
-            <Route element={<NotFoundContainer />} path="*" />
-          </Routes>
+          <Switch>
+            <Route component={TimelineContainer} path="/" />
+            <Route path="/dm">
+              <DirectMessageListContainer activeUser={activeUser} authModalId={authModalId} />
+            </Route>
+            <Route path="/dm/:conversationId">
+              <DirectMessageContainer activeUser={activeUser} authModalId={authModalId} />
+            </Route>
+            <Route component={SearchContainer} path="/search" />
+            <Route component={UserProfileContainer} path="/users/:username" />
+            <Route component={PostContainer} path="/posts/:postId" />
+            <Route component={TermContainer} path="/terms" />
+            <Route path="/crok">
+              <CrokContainer activeUser={activeUser} authModalId={authModalId} />
+            </Route>
+            <Route component={NotFoundContainer} />
+          </Switch>
         </Suspense>
       </AppPage>
 

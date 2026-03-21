@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import {
   ChangeEvent,
   useCallback,
@@ -122,18 +121,14 @@ export const DirectMessagePage = ({
 
             return (
               <li
-                className={classNames(
-                  "flex flex-col w-full",
-                  isActiveUserSend ? "items-end" : "items-start",
-                )}
+                className={`flex w-full flex-col ${isActiveUserSend ? "items-end" : "items-start"}`}
               >
                 <p
-                  className={classNames(
-                    "max-w-3/4 rounded-xl border px-4 py-2 text-sm whitespace-pre-wrap leading-relaxed wrap-anywhere",
+                  className={`max-w-3/4 wrap-anywhere rounded-xl border px-4 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
                     isActiveUserSend
                       ? "rounded-br-sm border-transparent bg-cax-brand text-cax-surface-raised"
-                      : "rounded-bl-sm border-cax-border bg-cax-surface text-cax-text",
-                  )}
+                      : "rounded-bl-sm border-cax-border bg-cax-surface text-cax-text"
+                  }`}
                 >
                   {message.body}
                 </p>

@@ -65,3 +65,15 @@ export async function sendJSON<T>(url: string, data: object): Promise<T> {
 
   return await res.json();
 }
+
+export async function sendPOST<T>(url: string): Promise<T> {
+  const res = await fetch(url, {
+    method: "POST",
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+
+  return await res.json();
+}

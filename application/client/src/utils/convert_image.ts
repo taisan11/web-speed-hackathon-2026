@@ -1,80 +1,91 @@
-import { initializeImageMagick, ImageMagick, MagickFormat } from "@imagemagick/magick-wasm";
-
-interface Options {
-  extension: MagickFormat;
-}
+import piexif from "piexifjs";
 
 export interface ConvertedImage {
   blob: Blob;
   alt: string;
 }
 
-let magickWasmPromise: Promise<ArrayBuffer> | null = null;
-let initializedImageMagickPromise: Promise<void> | null = null;
+const FALLBACK_ALT = "";
 
-async function getImageMagickWasm(): Promise<ArrayBuffer> {
-  if (magickWasmPromise != null) {
-    return magickWasmPromise;
+let encoderPromise: Promise<(imageData: ImageData) => Promise<ArrayBuffer>> | null = null;
+
+async function getAvifEncoder() {
+  if (encoderPromise != null) {
+    return encoderPromise;
   }
 
-  magickWasmPromise = fetch("/wasm/magick.wasm", { cache: "force-cache" })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`Failed to load magick.wasm: ${response.status}`);
+  encoderPromise = import("@jsquash/avif")
+    .then((module) => module.encode)
+    .catch((error: unknown) => {
+      encoderPromise = null;
+      throw error;
+    });
+
+  return encoderPromise;
+}
+
+async function fileToImageData(file: File): Promise<ImageData> {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const context = canvas.getContext("2d");
+  if (context == null) {
+    bitmap.close();
+    throw new Error("Failed to get 2D context.");
+  }
+  context.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return context.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+async function readDataUrl(file: File): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
       }
-      return response.arrayBuffer();
-    })
-    .catch((error: unknown) => {
-      magickWasmPromise = null;
-      throw error;
-    });
-
-  return magickWasmPromise;
+      reject(new Error("Failed to read image as data URL."));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read image metadata."));
+    reader.readAsDataURL(file);
+  });
 }
 
-async function initializeImageMagickOnce() {
-  if (initializedImageMagickPromise != null) {
-    return initializedImageMagickPromise;
+function normalizeAlt(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+async function readAltText(file: File): Promise<string> {
+  try {
+    const dataUrl = await readDataUrl(file);
+    const exif = piexif.load(dataUrl);
+    const imageDescription = normalizeAlt(exif["0th"]?.[piexif.ImageIFD.ImageDescription]);
+    if (imageDescription != null) {
+      return imageDescription;
+    }
+  } catch {
+    // Ignore EXIF read failure and fallback to default text
   }
 
-  initializedImageMagickPromise = getImageMagickWasm()
-    .then((magickWasm) => initializeImageMagick(magickWasm))
-    .catch((error: unknown) => {
-      initializedImageMagickPromise = null;
-      throw error;
-    });
-
-  return initializedImageMagickPromise;
+  return FALLBACK_ALT;
 }
 
-export async function convertImage(file: File, options: Options): Promise<ConvertedImage> {
-  await initializeImageMagickOnce();
-
-  const byteArray = new Uint8Array(await file.arrayBuffer());
-
-  return new Promise<ConvertedImage>((resolve, reject) => {
-    try {
-      ImageMagick.read(byteArray, (img) => {
-        try {
-          img.format = options.extension;
-          const alt = typeof img.comment === "string" ? img.comment : "";
-
-          img.write((output) => {
-            try {
-              resolve({
-                blob: new Blob([output as Uint8Array<ArrayBuffer>]),
-                alt,
-              });
-            } catch (error) {
-              reject(error);
-            }
-          });
-        } catch (error) {
-          reject(error);
-        }
-      });
-    } catch (error) {
-      reject(error);
-    }
-  });
+export async function convertImage(file: File): Promise<ConvertedImage> {
+  const [encode, imageData, alt] = await Promise.all([
+    getAvifEncoder(),
+    fileToImageData(file),
+    readAltText(file),
+  ]);
+  const encoded = await encode(imageData);
+  return {
+    blob: new Blob([encoded], { type: "image/avif" }),
+    alt,
+  };
 }

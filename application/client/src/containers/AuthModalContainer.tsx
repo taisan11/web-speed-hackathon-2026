@@ -63,10 +63,17 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
     async (values: AuthFormData) => {
       try {
         if (values.type === "signup") {
-          const user = await sendJSON<Models.User>("/api/v1/signup", values);
+          const user = await sendJSON<Models.User>("/api/v1/signup", {
+            name: values.name,
+            password: values.password,
+            username: values.username,
+          });
           onUpdateActiveUser(user);
         } else {
-          const user = await sendJSON<Models.User>("/api/v1/signin", values);
+          const user = await sendJSON<Models.User>("/api/v1/signin", {
+            password: values.password,
+            username: values.username,
+          });
           onUpdateActiveUser(user);
         }
         handleRequestCloseModal();

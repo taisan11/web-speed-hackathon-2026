@@ -1,4 +1,5 @@
 import { promises as fs } from "fs";
+import { spawn } from "node:child_process";
 import path from "path";
 
 import { fileTypeFromBuffer } from "file-type";
@@ -8,7 +9,47 @@ import type { Context } from "hono";
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 import { extractMetadataFromSound } from "@web-speed-hackathon-2026/server/src/utils/extract_metadata_from_sound";
 
-const EXTENSION = "mp3";
+const OUTPUT_EXTENSION = "mp3";
+const ACCEPTED_AUDIO_MIME_PREFIX = "audio/";
+const UNKNOWN_ARTIST = "Unknown";
+const UNKNOWN_TITLE = "Unknown";
+
+function runFFmpeg(inputPath: string, outputPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const ffmpeg = spawn(
+      "ffmpeg",
+      [
+        "-y",
+        "-i",
+        inputPath,
+        "-vn",
+        "-c:a",
+        "libmp3lame",
+        "-q:a",
+        "4",
+        outputPath,
+      ],
+      {
+        stdio: ["ignore", "ignore", "pipe"],
+      },
+    );
+
+    let stderr = "";
+    ffmpeg.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    ffmpeg.on("error", reject);
+    ffmpeg.on("close", (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+
+      reject(new Error(stderr || `ffmpeg exited with code ${code ?? "unknown"}`));
+    });
+  });
+}
 
 export const soundRouter = new Hono();
 
@@ -24,17 +65,36 @@ soundRouter.post("/sounds", async (c: Context) => {
   }
 
   const type = await fileTypeFromBuffer(rawBody);
-  if (type === undefined || type.ext !== EXTENSION) {
+  if (type === undefined || !type.mime.startsWith(ACCEPTED_AUDIO_MIME_PREFIX)) {
     return c.json({ message: "Invalid file type" }, 400);
   }
 
   const soundId = crypto.randomUUID();
+  const inputFileId = crypto.randomUUID();
+  const soundsDirectoryPath = path.resolve(UPLOAD_PATH, "sounds");
+  const tempDirectoryPath = path.resolve(UPLOAD_PATH, ".tmp");
+  const inputPath = path.resolve(tempDirectoryPath, `${inputFileId}.${type.ext}`);
+  const outputPath = path.resolve(soundsDirectoryPath, `${soundId}.${OUTPUT_EXTENSION}`);
 
-  const { artist, title } = await extractMetadataFromSound(rawBody);
+  await fs.mkdir(soundsDirectoryPath, { recursive: true });
+  await fs.mkdir(tempDirectoryPath, { recursive: true });
+  await fs.writeFile(inputPath, rawBody);
 
-  const filePath = path.resolve(UPLOAD_PATH, `./sounds/${soundId}.${EXTENSION}`);
-  await fs.mkdir(path.resolve(UPLOAD_PATH, "sounds"), { recursive: true });
-  await fs.writeFile(filePath, rawBody);
+  try {
+    await runFFmpeg(inputPath, outputPath);
+  } finally {
+    await fs.rm(inputPath, { force: true });
+  }
 
-  return c.json({ artist, id: soundId, title }, 200);
+  const outputBody = await fs.readFile(outputPath);
+  const { artist, title } = await extractMetadataFromSound(outputBody);
+
+  return c.json(
+    {
+      artist: artist ?? UNKNOWN_ARTIST,
+      id: soundId,
+      title: title ?? UNKNOWN_TITLE,
+    },
+    200,
+  );
 });

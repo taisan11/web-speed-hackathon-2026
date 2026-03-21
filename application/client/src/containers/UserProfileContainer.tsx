@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet";
-import { useParams } from "react-router";
+import { useRoute } from "wouter";
 
 import { InfiniteScroll } from "@web-speed-hackathon-2026/client/src/components/foundation/InfiniteScroll";
 import { UserProfilePage } from "@web-speed-hackathon-2026/client/src/components/user_profile/UserProfilePage";
@@ -9,7 +9,8 @@ import { useInfiniteFetch } from "@web-speed-hackathon-2026/client/src/hooks/use
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 export const UserProfileContainer = () => {
-  const { username } = useParams();
+  const [, params] = useRoute("/users/:username");
+  const username = params?.username;
 
   const { data: user, isLoading: isLoadingUser } = useFetch<Models.User>(
     `/api/v1/users/${username}`,

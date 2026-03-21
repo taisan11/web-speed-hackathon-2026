@@ -13,6 +13,7 @@ interface ReturnValues<T> {
 export function useInfiniteFetch<T>(
   apiPath: string,
   fetcher: (apiPath: string) => Promise<T[]>,
+  limit = LIMIT,
 ): ReturnValues<T> {
   const internalRef = useRef({ hasMore: true, isLoading: false, offset: 0 });
 
@@ -40,10 +41,10 @@ export function useInfiniteFetch<T>(
     };
 
     const separator = apiPath.includes("?") ? "&" : "?";
-    void fetcher(`${apiPath}${separator}limit=${LIMIT}&offset=${offset}`).then(
+    void fetcher(`${apiPath}${separator}limit=${limit}&offset=${offset}`).then(
       (pageData) => {
         const nextOffset = offset + pageData.length;
-        const nextHasMore = pageData.length === LIMIT;
+        const nextHasMore = pageData.length === limit;
         setResult((cur) => ({
           ...cur,
           data: [...cur.data, ...pageData],
@@ -70,7 +71,7 @@ export function useInfiniteFetch<T>(
         };
       },
     );
-  }, [apiPath, fetcher]);
+  }, [apiPath, fetcher, limit]);
 
   useEffect(() => {
     if (!apiPath) {

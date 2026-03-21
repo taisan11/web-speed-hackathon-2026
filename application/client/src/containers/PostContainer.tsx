@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet";
-import { useParams } from "react-router";
+import { useRoute } from "wouter";
 
 import { InfiniteScroll } from "@web-speed-hackathon-2026/client/src/components/foundation/InfiniteScroll";
 import { PostPage } from "@web-speed-hackathon-2026/client/src/components/post/PostPage";
@@ -50,6 +50,7 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
 };
 
 export const PostContainer = () => {
-  const { postId } = useParams();
+  const [, params] = useRoute("/posts/:postId");
+  const postId = params?.postId;
   return <PostContainerContent key={postId} postId={postId} />;
 };

@@ -16,7 +16,6 @@ export default defineConfig({
     alias: {
       "bayesian-bm25": path.resolve(__dirname, "node_modules", "bayesian-bm25/dist/index.js"),
       kuromoji: path.resolve(__dirname, "node_modules", "kuromoji/build/kuromoji.js"),
-      "@ffmpeg/ffmpeg": path.resolve(__dirname, "node_modules", "@ffmpeg/ffmpeg/dist/esm/index.js"),
     },
     extensions: [".tsx", ".ts", ".mjs", ".cjs", ".jsx", ".js"],
   },
@@ -100,14 +99,7 @@ export default defineConfig({
             normalizedId.includes("/src/components/new_post_modal/") ||
             normalizedId.includes("/src/utils/convert_image.ts") ||
             normalizedId.includes("/src/utils/convert_movie.ts") ||
-            normalizedId.includes("/src/utils/convert_sound.ts") ||
-            normalizedId.includes("/src/utils/extract_metadata_from_sound.ts") ||
-            normalizedId.includes("/src/utils/load_ffmpeg.ts") ||
-            normalizedId.includes("/node_modules/@ffmpeg/ffmpeg/") ||
-            normalizedId.includes("/node_modules/@imagemagick/magick-wasm/") ||
-            normalizedId.includes("/node_modules/encoding-japanese/") ||
-            normalizedId.includes("/node_modules/gifler/") ||
-            normalizedId.includes("/node_modules/omggif/") ||
+            normalizedId.includes("/node_modules/@jsquash/avif/") ||
             normalizedId.includes("/node_modules/piexifjs/")
           ) {
             return "modal-post";

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation } from "wouter";
 import {
   Field,
   InjectedFormProps,
@@ -53,7 +53,7 @@ const SearchPageComponent = ({
   handleSubmit,
   submitFailed,
 }: Props & InjectedFormProps<SearchFormData, Props>) => {
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const [isNegative, setIsNegative] = useState(false);
 
   const parsed = useMemo(() => parseSearchQuery(query), [query]);

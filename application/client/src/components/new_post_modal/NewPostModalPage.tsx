@@ -39,16 +39,8 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
   const [isConverting, setIsConverting] = useState(false);
 
   const convertImageOnDemand = useCallback(async (file: File) => {
-    const [{ MagickFormat }, { convertImage }] = await Promise.all([
-      import("@imagemagick/magick-wasm"),
-      import("@web-speed-hackathon-2026/client/src/utils/convert_image"),
-    ]);
-    return convertImage(file, { extension: MagickFormat.Avif });
-  }, []);
-
-  const convertSoundOnDemand = useCallback(async (file: File) => {
-    const { convertSound } = await import("@web-speed-hackathon-2026/client/src/utils/convert_sound");
-    return convertSound(file, { extension: "mp3" });
+    const { convertImage } = await import("@web-speed-hackathon-2026/client/src/utils/convert_image");
+    return convertImage(file);
   }, []);
 
   const handleChangeText = useCallback<ChangeEventHandler<HTMLTextAreaElement>>((ev) => {
@@ -101,26 +93,14 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
 
     setFileErrorMessage(isValid ? null : "10 MB より小さくしてください");
     if (isValid) {
-      setIsConverting(true);
-
-      convertSoundOnDemand(file)
-        .then((converted) => {
-          setParams((params) => ({
-            ...params,
-            images: [],
-            movie: undefined,
-            sound: new File([converted], "converted.mp3", { type: "audio/mpeg" }),
-          }));
-
-          setIsConverting(false);
-        })
-        .catch((error: unknown) => {
-          console.error(error);
-          setIsConverting(false);
-          setFileErrorMessage("音声の変換に失敗しました");
-        });
+      setParams((params) => ({
+        ...params,
+        images: [],
+        movie: undefined,
+        sound: file,
+      }));
     }
-  }, [convertSoundOnDemand]);
+  }, []);
 
   const handleChangeMovie = useCallback<ChangeEventHandler<HTMLInputElement>>((ev) => {
     const file = Array.from(ev.currentTarget.files ?? [])[0]!;
